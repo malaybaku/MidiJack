@@ -206,7 +206,11 @@ namespace MidiJack
             while (true)
             {
                 // Pop from the queue.
-                var data = DequeueIncomingData();
+#if UNITY_STANDALONE_WIN
+                ulong data = WindowsMidiInterop.Instance.DequeueIncomingData();
+#else 
+                ulong data = 0;
+#endif
                 if (data == 0) break;
 
                 // Parse the message.
@@ -261,13 +265,6 @@ namespace MidiJack
                 _messageHistory.Dequeue();
             #endif
         }
-
-        #endregion
-
-        #region Native Plugin Interface
-
-        [DllImport("MidiJackPlugin", EntryPoint="MidiJackDequeueIncomingData")]
-        public static extern ulong DequeueIncomingData();
 
         #endregion
 

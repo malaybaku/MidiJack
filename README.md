@@ -1,3 +1,5 @@
+**note: [What is changed from original](./what_is_changed.md)**
+
 MIDI Jack
 =========
 
@@ -8,8 +10,8 @@ MIDI Jack is a MIDI input plugin for Unity.
 System Requirements
 -------------------
 
-- Unity 5
-- Windows or Mac OS X
+- Unity 2018 or later
+- Windows only
 
 Installation
 ------------
@@ -61,6 +63,11 @@ There are also delegates for the each type of MIDI event.
 - MidiMaster.noteOffDelegate (channel, noteNumber)
 - MidiMaster.knobDelegate (channel, knobNumber, konbValue)
 
+In this fork, additional API to toggle MIDI read on / off. By default MIDI read is enabled.
+
+- WindowsMidiInterop.Instance.SetActive (enable)
+    - Note: This API still have limitation that it is "all or nothing" style.
+
 MIDI Monitor Window
 -------------------
 
@@ -74,7 +81,7 @@ The MIDI Monitor window is available from the menu `Window` -> `MIDI Jack`.
 Current Limitations
 -------------------
 
-- Currently MIDI Jack only supports Windows and OS X. No iOS support yet.
+- Only for Windows.
 - Only supports note and CC messages. No support for program changes nor
   SysEx.
 - The MIDI Jack plugin always tries to capture all available MIDI devices.
