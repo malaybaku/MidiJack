@@ -85,7 +85,7 @@ Current Limitations
 - Only supports note and CC messages. No support for program changes nor
   SysEx.
 - The MIDI Jack plugin always tries to capture all available MIDI devices.
-  On Windows this behavior may conflict with other MIDI applications.
+  When this bothers you, use WindowsMidiInterop.Instance.SetActive API.
 
 License
 -------
