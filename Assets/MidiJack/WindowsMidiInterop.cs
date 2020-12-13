@@ -27,7 +27,7 @@ namespace MidiJack
         private readonly ConcurrentStack<IntPtr> _handleToClose = new ConcurrentStack<IntPtr>();
         private readonly HashSet<IntPtr> _activeHandles = new HashSet<IntPtr>();
 
-        public bool IsActive { get; private set; } = true;
+        public bool IsActive { get; private set; } = false;
         
         /// <summary>
         /// get queued message if exists.
