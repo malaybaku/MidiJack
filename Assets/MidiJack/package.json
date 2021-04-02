@@ -1,0 +1,19 @@
+{
+    "name": "com.malaybaku.managed-midijack",
+    "displayName": "Managed MidiJack",
+    "version": "1.0.0",
+    "unity": "2019.4",
+    "description": "Fork of MidiJack by Windows specialized managed implement",
+    "license": {
+        "type": "MIT",
+        "url": "https://github.com/keijiro/MidiJack"
+    },
+    "keywords": ["unity"],
+    "category": "",
+    "dependencies": {
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/malaybaku/MidiJack"
+    }
+}
