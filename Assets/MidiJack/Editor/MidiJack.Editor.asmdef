@@ -1,0 +1,17 @@
+{
+    "name": "MidiJack.Editor",
+    "references": [
+        "GUID:0197a7d9a0a7ea04d8218daf3f1f3368"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
