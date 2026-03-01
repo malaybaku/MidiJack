@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using MidiJack;
 
 public class NoteIndicatorGroup : MonoBehaviour
 {
@@ -6,6 +7,7 @@ public class NoteIndicatorGroup : MonoBehaviour
 
     void Start()
     {
+        WindowsMidiInterop.Instance.SetActive(true);
         for (var i = 0; i < 128; i++)
         {
             var go = Instantiate<GameObject>(prefab);

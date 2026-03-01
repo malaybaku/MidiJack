@@ -206,9 +206,9 @@ namespace MidiJack
             while (true)
             {
                 // Pop from the queue.
-#if UNITY_STANDALONE_WIN
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
                 ulong data = WindowsMidiInterop.Instance.DequeueIncomingData();
-#else 
+#else
                 ulong data = 0;
 #endif
                 if (data == 0) break;
