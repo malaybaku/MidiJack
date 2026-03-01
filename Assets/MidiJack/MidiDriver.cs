@@ -193,19 +193,13 @@ namespace MidiJack
             }
 
             // Refresh device state once per frame.
-#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
             WindowsMidiInterop.Instance.UpdateDevices();
-#endif
 
             // Process the message queue.
             while (true)
             {
                 // Pop from the queue.
-#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
                 var data = WindowsMidiInterop.Instance.DequeueIncomingData();
-#else
-                ulong data = 0;
-#endif
                 if (data == 0) break;
 
                 // Parse the message.
