@@ -39,15 +39,14 @@ namespace MidiJack
 
         void OnGUI()
         {
-            var endpointCount = CountEndpoints();
+            var deviceCount = WindowsMidiInterop.NativeMethods.midiInGetNumDevs();
 
             // Endpoints
             var temp = "Detected MIDI devices:";
-            for (var i = 0; i < endpointCount; i++)
+            for (uint i = 0; i < deviceCount; i++)
             {
-                var id = GetEndpointIdAtIndex(i);
-                var name = GetEndpointName(id);
-                temp += "\n" + id.ToString("X8") + ": " + name;
+                var name = GetDeviceName(i);
+                temp += "\n" + i.ToString("X8") + ": " + name;
             }
             EditorGUILayout.HelpBox(temp, MessageType.None);
 
@@ -81,19 +80,17 @@ namespace MidiJack
 
         #endregion
 
-        #region Native Plugin Interface
+        #region Device Info
 
-        [DllImport("MidiJackPlugin", EntryPoint="MidiJackCountEndpoints")]
-        static extern int CountEndpoints();
-
-        [DllImport("MidiJackPlugin", EntryPoint="MidiJackGetEndpointIDAtIndex")]
-        static extern uint GetEndpointIdAtIndex(int index);
-
-        [DllImport("MidiJackPlugin")]
-        static extern System.IntPtr MidiJackGetEndpointName(uint id);
-
-        static string GetEndpointName(uint id) {
-            return Marshal.PtrToStringAnsi(MidiJackGetEndpointName(id));
+        static string GetDeviceName(uint deviceId)
+        {
+            var caps = new WindowsMidiInterop.NativeMethods.MIDIINCAPS();
+            uint size = (uint)Marshal.SizeOf<WindowsMidiInterop.NativeMethods.MIDIINCAPS>();
+            if (WindowsMidiInterop.NativeMethods.midiInGetDevCaps(deviceId, ref caps, size) == WindowsMidiInterop.NativeMethods.MMSYSERR_NOERROR)
+            {
+                return caps.szPname;
+            }
+            return "(unknown)";
         }
 
         #endregion

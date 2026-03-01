@@ -306,6 +306,20 @@ namespace MidiJack
             [DllImport("winmm.dll")]
             public static extern uint midiInAddBuffer(IntPtr hMidiIn, IntPtr lpMidiInHdr, uint cbMidiInHdr);
 
+            [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+            public struct MIDIINCAPS
+            {
+                public ushort wMid;
+                public ushort wPid;
+                public uint vDriverVersion;
+                [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+                public string szPname;
+                public uint dwSupport;
+            }
+
+            [DllImport("winmm.dll", CharSet = CharSet.Auto)]
+            public static extern uint midiInGetDevCaps(uint uDeviceID, ref MIDIINCAPS lpMidiInCaps, uint cbMidiInCaps);
+
             public const int MMSYSERR_NOERROR = 0;
             public const int MIM_DATA = 0x3C3;
             public const int MIM_LONGDATA = 0x3C4;
