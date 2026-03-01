@@ -33,7 +33,7 @@ namespace MidiJack
         {
             var go = new GameObject("MIDI Updater");
 
-            GameObject.DontDestroyOnLoad(go);
+            DontDestroyOnLoad(go);
             go.hideFlags = HideFlags.HideInHierarchy;
 
             var updater = go.AddComponent<MidiStateUpdater>();

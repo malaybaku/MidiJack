@@ -62,9 +62,6 @@ namespace MidiJack
         }
 
         public override string ToString()
-        {
-            const string fmt = "s({0:X2}) d({1:X2},{2:X2}) from {3:X8}";
-            return string.Format(fmt, status, data1, data2, source);
-        }
+            => $"s({status:X2}) d({data1:X2},{data2:X2}) from {source:X8}";
     }
 }

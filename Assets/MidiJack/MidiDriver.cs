@@ -23,7 +23,6 @@
 //
 using UnityEngine;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 
 namespace MidiJack
 {
@@ -39,16 +38,10 @@ namespace MidiJack
             // 0<X<=1 : On (X represents velocity)
             // 1<X<=2 : Triggered on this frame
             //          (X-1 represents velocity)
-            public float[] _noteArray;
+            public float[] _noteArray = new float[128];
 
             // Knob number to knob value mapping
-            public Dictionary<int, float> _knobMap;
-
-            public ChannelState()
-            {
-                _noteArray = new float[128];
-                _knobMap = new Dictionary<int, float>();
-            }
+            public Dictionary<int, float> _knobMap = new();
         }
 
         // Channel state array
@@ -95,8 +88,7 @@ namespace MidiJack
         {
             UpdateIfNeeded();
             var cs = _channelArray[(int)channel];
-            if (cs._knobMap.ContainsKey(knobNumber)) return cs._knobMap[knobNumber];
-            return defaultValue;
+            return cs._knobMap.TryGetValue(knobNumber, out var value) ? value : defaultValue;
         }
 
         #endregion
@@ -144,9 +136,7 @@ namespace MidiJack
         // Message history
         Queue<MidiMessage> _messageHistory;
 
-        public Queue<MidiMessage> History {
-            get { return _messageHistory; }
-        }
+        public Queue<MidiMessage> History => _messageHistory;
 
         #endif
 
@@ -161,7 +151,7 @@ namespace MidiJack
                 _channelArray[i] = new ChannelState();
 
             #if UNITY_EDITOR
-            _messageHistory = new Queue<MidiMessage>();
+            _messageHistory = new();
             #endif
         }
 
@@ -202,15 +192,14 @@ namespace MidiJack
                 }
             }
 
+            // Refresh device state once per frame.
+            WindowsMidiInterop.Instance.UpdateDevices();
+
             // Process the message queue.
             while (true)
             {
                 // Pop from the queue.
-#if UNITY_STANDALONE_WIN
-                ulong data = WindowsMidiInterop.Instance.DequeueIncomingData();
-#else 
-                ulong data = 0;
-#endif
+                var data = WindowsMidiInterop.Instance.DequeueIncomingData();
                 if (data == 0) break;
 
                 // Parse the message.
@@ -226,8 +215,7 @@ namespace MidiJack
                     var velocity = 1.0f / 127 * message.data2 + 1;
                     _channelArray[channelNumber]._noteArray[message.data1] = velocity;
                     _channelArray[(int)MidiChannel.All]._noteArray[message.data1] = velocity;
-                    if (noteOnDelegate != null)
-                        noteOnDelegate((MidiChannel)channelNumber, message.data1, velocity - 1);
+                    noteOnDelegate?.Invoke((MidiChannel)channelNumber, message.data1, velocity - 1);
                 }
 
                 // Note off message?
@@ -235,8 +223,7 @@ namespace MidiJack
                 {
                     _channelArray[channelNumber]._noteArray[message.data1] = -1;
                     _channelArray[(int)MidiChannel.All]._noteArray[message.data1] = -1;
-                    if (noteOffDelegate != null)
-                        noteOffDelegate((MidiChannel)channelNumber, message.data1);
+                    noteOffDelegate?.Invoke((MidiChannel)channelNumber, message.data1);
                 }
 
                 // CC message?
@@ -248,8 +235,7 @@ namespace MidiJack
                     _channelArray[channelNumber]._knobMap[message.data1] = level;
                     // Do again for All-ch.
                     _channelArray[(int)MidiChannel.All]._knobMap[message.data1] = level;
-                    if (knobDelegate != null)
-                        knobDelegate((MidiChannel)channelNumber, message.data1, level);
+                    knobDelegate?.Invoke((MidiChannel)channelNumber, message.data1, level);
                 }
 
                 #if UNITY_EDITOR
@@ -277,8 +263,7 @@ namespace MidiJack
                 if (_instance == null) {
                     _instance = new MidiDriver();
                     if (Application.isPlaying)
-                        MidiStateUpdater.CreateGameObject(
-                            new MidiStateUpdater.Callback(_instance.Update));
+                        MidiStateUpdater.CreateGameObject(_instance.Update);
                 }
                 return _instance;
             }

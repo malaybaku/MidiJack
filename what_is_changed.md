@@ -13,8 +13,8 @@ In Windows environment,
 
 System Requirements:
 
-* Unity 2018 or later
-* Windows only. No support for Mac 
+* Unity 6.0 or later
+* Windows only. No support for Mac
 
 Installation
 

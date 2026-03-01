@@ -10,7 +10,7 @@ MIDI Jack is a MIDI input plugin for Unity.
 System Requirements
 -------------------
 
-- Unity 2018 or later
+- Unity 6.0 or later
 - Windows only
 
 Installation
