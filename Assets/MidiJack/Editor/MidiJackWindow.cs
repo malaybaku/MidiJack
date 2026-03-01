@@ -34,7 +34,7 @@ namespace MidiJack
         [MenuItem("Window/MIDI Jack")]
         public static void ShowWindow()
         {
-            EditorWindow.GetWindow<MidiJackWindow>("MIDI Jack");
+            GetWindow<MidiJackWindow>("MIDI Jack");
         }
 
         void OnGUI()
@@ -46,7 +46,7 @@ namespace MidiJack
             for (uint i = 0; i < deviceCount; i++)
             {
                 var name = GetDeviceName(i);
-                temp += "\n" + i.ToString("X8") + ": " + name;
+                temp += $"\n{i:X8}: {name}";
             }
             EditorGUILayout.HelpBox(temp, MessageType.None);
 
@@ -85,7 +85,7 @@ namespace MidiJack
         static string GetDeviceName(uint deviceId)
         {
             var caps = new WindowsMidiInterop.NativeMethods.MIDIINCAPS();
-            uint size = (uint)Marshal.SizeOf<WindowsMidiInterop.NativeMethods.MIDIINCAPS>();
+            var size = (uint)Marshal.SizeOf<WindowsMidiInterop.NativeMethods.MIDIINCAPS>();
             if (WindowsMidiInterop.NativeMethods.midiInGetDevCaps(deviceId, ref caps, size) == WindowsMidiInterop.NativeMethods.MMSYSERR_NOERROR)
             {
                 return caps.szPname;

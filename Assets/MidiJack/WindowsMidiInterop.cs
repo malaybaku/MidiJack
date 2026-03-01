@@ -15,9 +15,9 @@ namespace MidiJack
 
         private readonly NativeMethods.MidiInProcDelegate _midiInProc;
 
-        private static WindowsMidiInterop _instance = null;
+        private static WindowsMidiInterop _instance;
         public static WindowsMidiInterop Instance
-            => _instance ?? (_instance = new WindowsMidiInterop());
+            => _instance ??= new();
 
         public WindowsMidiInterop()
         {
@@ -32,11 +32,11 @@ namespace MidiJack
         }
 
         //NOTE: message ulong style accords to original MidiJack native
-        private readonly ConcurrentQueue<ulong> _midiMessageQueue = new ConcurrentQueue<ulong>();
-        private readonly ConcurrentQueue<(IntPtr handle, IntPtr headerPtr)> _sysExBufferToReAdd = new ConcurrentQueue<(IntPtr, IntPtr)>();
-        private readonly Dictionary<uint, DeviceState> _activeHandles = new Dictionary<uint, DeviceState>();
+        private readonly ConcurrentQueue<ulong> _midiMessageQueue = new();
+        private readonly ConcurrentQueue<(IntPtr handle, IntPtr headerPtr)> _sysExBufferToReAdd = new();
+        private readonly Dictionary<uint, DeviceState> _activeHandles = new();
 
-        public bool IsActive { get; private set; } = false;
+        public bool IsActive { get; private set; }
 
         /// <summary>
         /// デバイスの接続状態を更新し、SysExバッファの再投入を行う。
@@ -95,14 +95,14 @@ namespace MidiJack
         private void RefreshDevices()
         {
             // SysExコールバックで返却されたバッファを再投入
-            uint headerSize = (uint)Marshal.SizeOf<NativeMethods.MIDIHDR>();
+            var headerSize = (uint)Marshal.SizeOf<NativeMethods.MIDIHDR>();
             while (_sysExBufferToReAdd.TryDequeue(out var item))
             {
                 NativeMethods.midiInAddBuffer(item.handle, item.headerPtr, headerSize);
             }
 
             // デバイス数が変化していたら全閉じ→全開きでデバイスIDのずれに対応
-            uint deviceCount = NativeMethods.midiInGetNumDevs();
+            var deviceCount = NativeMethods.midiInGetNumDevs();
             if (deviceCount != _activeHandles.Count)
             {
                 CloseAllDevices();
@@ -135,7 +135,7 @@ namespace MidiJack
 
         private void OpenAllDevices()
         {
-            uint deviceCount = NativeMethods.midiInGetNumDevs();
+            var deviceCount = NativeMethods.midiInGetNumDevs();
             for (uint i = 0; i < deviceCount; i++)
             {
                 OpenDevice(i);
@@ -149,7 +149,7 @@ namespace MidiJack
                 return;
             }
 
-            uint err = NativeMethods.midiInOpen(out IntPtr handle, id, _midiInProc);
+            var err = NativeMethods.midiInOpen(out var handle, id, _midiInProc);
             if (err != NativeMethods.MMSYSERR_NOERROR)
             {
                 return;
@@ -171,12 +171,14 @@ namespace MidiJack
             state.SysExBufferPtr = Marshal.AllocHGlobal(SysExBufferSize);
             state.SysExHeaderPtr = Marshal.AllocHGlobal(Marshal.SizeOf<NativeMethods.MIDIHDR>());
 
-            var header = new NativeMethods.MIDIHDR();
-            header.lpData = state.SysExBufferPtr;
-            header.dwBufferLength = SysExBufferSize;
+            var header = new NativeMethods.MIDIHDR
+            {
+                lpData = state.SysExBufferPtr,
+                dwBufferLength = SysExBufferSize,
+            };
             Marshal.StructureToPtr(header, state.SysExHeaderPtr, false);
 
-            uint headerSize = (uint)Marshal.SizeOf<NativeMethods.MIDIHDR>();
+            var headerSize = (uint)Marshal.SizeOf<NativeMethods.MIDIHDR>();
             if (NativeMethods.midiInPrepareHeader(state.Handle, state.SysExHeaderPtr, headerSize) != NativeMethods.MMSYSERR_NOERROR)
             {
                 FreeSysExMemory(state);
@@ -197,7 +199,7 @@ namespace MidiJack
                 return;
             }
 
-            uint headerSize = (uint)Marshal.SizeOf<NativeMethods.MIDIHDR>();
+            var headerSize = (uint)Marshal.SizeOf<NativeMethods.MIDIHDR>();
             NativeMethods.midiInUnprepareHeader(state.Handle, state.SysExHeaderPtr, headerSize);
             FreeSysExMemory(state);
         }
