@@ -33,7 +33,6 @@ namespace MidiJack
 
         //NOTE: message ulong style accords to original MidiJack native
         private readonly ConcurrentQueue<ulong> _midiMessageQueue = new ConcurrentQueue<ulong>();
-        private readonly ConcurrentStack<IntPtr> _handleToClose = new ConcurrentStack<IntPtr>();
         private readonly ConcurrentQueue<(IntPtr handle, IntPtr headerPtr)> _sysExBufferToReAdd = new ConcurrentQueue<(IntPtr, IntPtr)>();
         private readonly Dictionary<uint, DeviceState> _activeHandles = new Dictionary<uint, DeviceState>();
 
@@ -95,22 +94,18 @@ namespace MidiJack
 
         private void RefreshDevices()
         {
-            // MIM_CLOSEはmidiInClose完了後に発行されるため、ハンドルは既にクローズ済み。
-            // _activeHandlesからの除去とSysExメモリ解放のみ行う。
-            while (_handleToClose.TryPop(out var handle))
-            {
-                var state = RemoveHandleFromActive(handle);
-                if (state != null)
-                {
-                    FreeSysExMemory(state);
-                }
-            }
-
             // SysExコールバックで返却されたバッファを再投入
             uint headerSize = (uint)Marshal.SizeOf<NativeMethods.MIDIHDR>();
             while (_sysExBufferToReAdd.TryDequeue(out var item))
             {
                 NativeMethods.midiInAddBuffer(item.handle, item.headerPtr, headerSize);
+            }
+
+            // デバイス数が変化していたら全閉じ→全開きでデバイスIDのずれに対応
+            uint deviceCount = NativeMethods.midiInGetNumDevs();
+            if (deviceCount != _activeHandles.Count)
+            {
+                CloseAllDevices();
             }
 
             OpenAllDevices();
@@ -136,9 +131,6 @@ namespace MidiJack
                 NativeMethods.midiInClose(state.Handle);
             }
             _activeHandles.Clear();
-
-            // MIM_CLOSEで積まれたハンドルは既にクローズ済みなので排出のみ
-            while (_handleToClose.TryPop(out _)) { }
         }
 
         private void OpenAllDevices()
@@ -224,28 +216,6 @@ namespace MidiJack
             }
         }
 
-        private DeviceState RemoveHandleFromActive(IntPtr handle)
-        {
-            uint? keyToRemove = null;
-            DeviceState state = null;
-            foreach (var kvp in _activeHandles)
-            {
-                if (kvp.Value.Handle == handle)
-                {
-                    keyToRemove = kvp.Key;
-                    state = kvp.Value;
-                    break;
-                }
-            }
-
-            if (keyToRemove.HasValue)
-            {
-                _activeHandles.Remove(keyToRemove.Value);
-            }
-
-            return state;
-        }
-
         private void MidiInProc(IntPtr hMidiIn, uint wMsg, IntPtr dwInstance, IntPtr dwParam1, IntPtr dwParam2)
         {
             if (wMsg == NativeMethods.MIM_DATA)
@@ -258,10 +228,6 @@ namespace MidiJack
             {
                 // SysEx受信(または受信エラー): メインスレッドでバッファを再投入するためキューに積む
                 _sysExBufferToReAdd.Enqueue((hMidiIn, dwParam1));
-            }
-            else if (wMsg == NativeMethods.MIM_CLOSE)
-            {
-                _handleToClose.Push(hMidiIn);
             }
         }
 
@@ -341,7 +307,6 @@ namespace MidiJack
             public static extern uint midiInAddBuffer(IntPtr hMidiIn, IntPtr lpMidiInHdr, uint cbMidiInHdr);
 
             public const int MMSYSERR_NOERROR = 0;
-            public const int MIM_CLOSE = 0x3C2;
             public const int MIM_DATA = 0x3C3;
             public const int MIM_LONGDATA = 0x3C4;
             public const int MIM_LONGERROR = 0x3C5;
