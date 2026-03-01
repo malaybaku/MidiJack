@@ -202,6 +202,11 @@ namespace MidiJack
                 }
             }
 
+            // Refresh device state once per frame.
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
+            WindowsMidiInterop.Instance.UpdateDevices();
+#endif
+
             // Process the message queue.
             while (true)
             {

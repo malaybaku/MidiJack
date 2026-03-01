@@ -40,7 +40,21 @@ namespace MidiJack
         public bool IsActive { get; private set; } = false;
 
         /// <summary>
-        /// get queued message if exists.
+        /// デバイスの接続状態を更新し、SysExバッファの再投入を行う。
+        /// フレームあたり1回、メッセージ処理ループの前に呼ぶこと。
+        /// </summary>
+        public void UpdateDevices()
+        {
+            if (!IsActive)
+            {
+                return;
+            }
+
+            RefreshDevices();
+        }
+
+        /// <summary>
+        /// キューに溜まったMIDIメッセージを1つ取り出す。0が返ったらキューは空。
         /// </summary>
         /// <returns></returns>
         public ulong DequeueIncomingData()
@@ -50,7 +64,6 @@ namespace MidiJack
                 return 0;
             }
 
-            RefreshDevices();
             return _midiMessageQueue.TryDequeue(out var msg) ? msg : 0;
         }
 
