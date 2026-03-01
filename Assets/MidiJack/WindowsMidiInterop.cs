@@ -25,7 +25,7 @@ namespace MidiJack
         //NOTE: message ulong style accords to original MidiJack native
         private readonly ConcurrentQueue<ulong> _midiMessageQueue = new ConcurrentQueue<ulong>();
         private readonly ConcurrentStack<IntPtr> _handleToClose = new ConcurrentStack<IntPtr>();
-        private readonly HashSet<IntPtr> _activeHandles = new HashSet<IntPtr>();
+        private readonly Dictionary<uint, IntPtr> _activeHandles = new Dictionary<uint, IntPtr>();
 
         public bool IsActive { get; private set; } = false;
         
@@ -75,7 +75,7 @@ namespace MidiJack
             while (_handleToClose.TryPop(out var handle))
             {
                 NativeMethods.midiInClose(handle);
-                _activeHandles.Remove(handle);
+                RemoveHandleFromActive(handle);
             }
 
             OpenAllDevices();
@@ -83,9 +83,9 @@ namespace MidiJack
 
         private void CloseAllDevices()
         {
-            foreach (var h in _activeHandles)
+            foreach (var kvp in _activeHandles)
             {
-                NativeMethods.midiInClose(h);
+                NativeMethods.midiInClose(kvp.Value);
             }
             _activeHandles.Clear();
 
@@ -106,19 +106,42 @@ namespace MidiJack
 
         private void OpenDevice(uint id)
         {
+            if (_activeHandles.ContainsKey(id))
+            {
+                return;
+            }
+
             uint err = NativeMethods.midiInOpen(out IntPtr handle, id, _midiInProc);
             if (err != NativeMethods.MMSYSERR_NOERROR)
             {
                 return;
             }
-            
+
             if (NativeMethods.midiInStart(handle) == NativeMethods.MMSYSERR_NOERROR)
             {
-                _activeHandles.Add(handle);
+                _activeHandles[id] = handle;
             }
             else
             {
                 NativeMethods.midiInClose(handle);
+            }
+        }
+
+        private void RemoveHandleFromActive(IntPtr handle)
+        {
+            uint? keyToRemove = null;
+            foreach (var kvp in _activeHandles)
+            {
+                if (kvp.Value == handle)
+                {
+                    keyToRemove = kvp.Key;
+                    break;
+                }
+            }
+
+            if (keyToRemove.HasValue)
+            {
+                _activeHandles.Remove(keyToRemove.Value);
             }
         }
 
