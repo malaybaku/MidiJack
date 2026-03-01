@@ -95,9 +95,10 @@ namespace MidiJack
 
         private void RefreshDevices()
         {
+            // MIM_CLOSEはmidiInClose完了後に発行されるため、ハンドルは既にクローズ済み。
+            // _activeHandlesからの除去とSysExメモリ解放のみ行う。
             while (_handleToClose.TryPop(out var handle))
             {
-                NativeMethods.midiInClose(handle);
                 var state = RemoveHandleFromActive(handle);
                 if (state != null)
                 {
@@ -120,6 +121,7 @@ namespace MidiJack
             // 全デバイスのMIDI入力を停止し、保留中バッファを返却させる
             foreach (var kvp in _activeHandles)
             {
+                NativeMethods.midiInStop(kvp.Value.Handle);
                 NativeMethods.midiInReset(kvp.Value.Handle);
             }
 
@@ -135,10 +137,8 @@ namespace MidiJack
             }
             _activeHandles.Clear();
 
-            while (_handleToClose.TryPop(out var h))
-            {
-                NativeMethods.midiInClose(h);
-            }
+            // MIM_CLOSEで積まれたハンドルは既にクローズ済みなので排出のみ
+            while (_handleToClose.TryPop(out _)) { }
         }
 
         private void OpenAllDevices()
@@ -321,6 +321,9 @@ namespace MidiJack
 
             [DllImport("winmm.dll")]
             public static extern uint midiInStart(IntPtr hMidiIn);
+
+            [DllImport("winmm.dll")]
+            public static extern uint midiInStop(IntPtr hMidiIn);
 
             [DllImport("winmm.dll")]
             public static extern uint midiInClose(IntPtr hMidiIn);
